@@ -19,6 +19,7 @@ def loadDataSet(filename):
         del(lineArr[0]); del(lineArr[1])
         lineArr[3] = int(lineArr[3])+int(lineArr[4])
         del(lineArr[4])
+        print lineArr
         dataMat.append(lineArr)
     m,n = shape(dataMat)
     sum = 0
@@ -86,59 +87,10 @@ def grandAscent1(dataMat, classLabels, numIter=150):
             del(dataIndex[randIndex])
     return weights
 
-def selectRandJ(i, m):
-    j = i
-    while j == i:
-        j = int(random.uniform(0, m))
-    return j
-
-def smo(dataMatIn, labelMatIn, C, tol, maxIter):
-    dataMat = mat(dataMatIn); labelMat = mat(labelMatIn).transpose()
-    b = 0; passes = 0
-    m, n = shape(dataMat)
-    alpha = mat(zeros((m,1)))
-    while (passes < maxIter):
-        alphaChanged = 0
-        for i in range(m):
-            fxi = float(multiply(alpha,labelMat).T*(dataMat*dataMat[i,:].T)) + b
-            Ei = fxi - float(labelMat[i])
-            if ((labelMat[i]*Ei < -tol) & (alpha[i] < C)) | ((labelMat[i]*Ei > tol) & (alpha[i] > 0)):
-                j = selectRandJ(i, m)
-                fxj = float(multiply(alpha,labelMat).T*(dataMat*dataMat[j,:].T)) + b
-                Ej = fxj - labelMat[j]
-                alphaIold = alpha[i].copy(); alphaJold = alpha[j].copy()
-                if labelMat[i] != labelMat[j]:
-                    L = max(0, alpha[j]-alpha[i])
-                    H = min(C, C+alpha[j]-alpha[i])
-                else:
-                    L = max(0, alpha[i]+alpha[j]-C)
-                    H = min(C, alpha[i]+alpha[j])
-                if L == H: continue
-                eta = 2.0*dataMat[i,:]*dataMat[j,:].T - dataMat[i,:]*dataMat[i,:].T - dataMat[j,:]*dataMat[j,:].T
-                if eta >= 0: continue
-                alpha[j] = alpha[j] - labelMat[j]*(Ei-Ej)/eta
-
-                if alpha[j] > H: alpha[j] = H
-                elif alpha[j] < L: alpha[j] = L
-
-                if abs(alpha[i]-alpha[j]) < 0.00001: continue
-                alpha[i] = alpha[i] + labelMat[i]*labelMat[j]*(alphaJold-alpha[j])
-                b1 = b-Ei-labelMat[i]*(alpha[i]-alphaIold)*dataMat[i,:]*dataMat[i,:].T - labelMat[j]*(alpha[j]-alphaJold)*dataMat[i,:]*dataMat[j,:].T
-                b2 = b-Ej-labelMat[i]*(alpha[i]-alphaIold)*dataMat[i,:]*dataMat[j,:].T - labelMat[j]*(alpha[j]-alphaJold)*dataMat[j,:]*dataMat[j,:].T
-
-                if (alpha[i] > 0) & (alpha[i] < C): b = b1
-                elif (alpha[j] > 0) & (alpha[j] < C): b = b2
-                else: b = (b1+b2)/2
-                alphaChanged += 1
-        if alphaChanged == 0:
-            passes += 1
-        else:
-            passes = 0
-    return b, alpha
-
 def colicTest():
     trainMat, trainLabels = loadDataSet('./data/train.csv')
     weights = grandAscent(array(trainMat), trainLabels)
+    print weights
     dataMat = []
     fr = open('./data/test.csv')
     sequences = []
